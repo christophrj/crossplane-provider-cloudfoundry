@@ -191,22 +191,27 @@ func (e *externalClient) Update(ctx context.Context, res resource.Managed) (mana
 
 // Delete the external resource upon deletion of its associated Managed
 // resource. Called when the managed resource has been deleted.
-func (e *externalClient) Delete(ctx context.Context, res resource.Managed) error {
+func (e *externalClient) Delete(ctx context.Context, res resource.Managed) (managed.ExternalDelete, error) {
 	managedOrgQuota, ok := res.(*v1alpha1.OrgQuota)
 	if !ok {
-		return errors.New(errNotOrgQuota)
+		return managed.ExternalDelete{}, errors.New(errNotOrgQuota)
 	}
 	managedOrgQuota.SetConditions(xpv1.Deleting())
 
 	// assert that ID is set
 	if managedOrgQuota.Status.AtProvider.ID == nil {
-		return errors.Wrap(errors.New(".Status.AtProvider.ID is not set"), errDelete)
+		return managed.ExternalDelete{}, errors.Wrap(errors.New(".Status.AtProvider.ID is not set"), errDelete)
 	}
 
 	_, err := e.cloudFoundryClient.Delete(ctx, *managedOrgQuota.Status.AtProvider.ID)
 	if err != nil {
-		return errors.Wrap(err, errDelete)
+		return managed.ExternalDelete{}, errors.Wrap(err, errDelete)
 	}
 
+	return managed.ExternalDelete{}, nil
+}
+
+// Disconnect from the provider and close the ExternalClient.
+func (c *externalClient) Disconnect(ctx context.Context) error {
 	return nil
 }

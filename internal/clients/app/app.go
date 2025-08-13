@@ -238,7 +238,7 @@ func newCreateOption(spec v1alpha1.AppParameters) *resource.AppCreate {
 	case "buildpack":
 		appCreate.Lifecycle = &resource.Lifecycle{
 			Type: spec.Lifecycle,
-			BuildpackData: resource.BuildpackLifecycle{
+			Data: resource.BuildpackLifecycle{
 				Buildpacks: spec.Buildpacks,
 				Stack:      ptr.Deref(spec.Stack, ""),
 			},
@@ -260,7 +260,7 @@ func newUpdateOption(spec v1alpha1.AppParameters) *resource.AppUpdate {
 	case "buildpack":
 		lifecycle = &resource.Lifecycle{
 			Type: spec.Lifecycle,
-			BuildpackData: resource.BuildpackLifecycle{
+			Data: resource.BuildpackLifecycle{
 				Buildpacks: spec.Buildpacks,
 				Stack:      ptr.Deref(spec.Stack, ""),
 			},

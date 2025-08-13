@@ -237,23 +237,28 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Delete deletes a space
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Space)
 	if !ok {
-		return errors.New(errNotSpace)
+		return managed.ExternalDelete{}, errors.New(errNotSpace)
 	}
 	cr.SetConditions(xpv1.Deleting())
 
 	// assert that ID is set
 	if !clients.IsValidGUID(cr.Status.AtProvider.ID) {
-		return errors.New(errDelete)
+		return managed.ExternalDelete{}, errors.New(errDelete)
 	}
 
 	_, err := c.client.Delete(ctx, cr.Status.AtProvider.ID)
 	if err != nil {
-		return errors.Wrap(err, errDelete)
+		return managed.ExternalDelete{}, errors.Wrap(err, errDelete)
 	}
 
+	return managed.ExternalDelete{}, nil
+}
+
+// Disconnect from the provider and close the ExternalClient.
+func (c *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 

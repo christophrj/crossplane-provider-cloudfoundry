@@ -203,22 +203,27 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Delete managed resource Domain
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Domain)
 	if !ok {
-		return errors.New(errNotDomainKind)
+		return managed.ExternalDelete{}, errors.New(errNotDomainKind)
 	}
 	cr.SetConditions(xpv1.Deleting())
 
 	// assert that ID is set
 	if cr.Status.AtProvider.ID == nil {
-		return errors.New(errDelete)
+		return managed.ExternalDelete{}, errors.New(errDelete)
 	}
 
 	_, err := c.client.Delete(ctx, *cr.Status.AtProvider.ID)
 	if err != nil {
-		return errors.Wrap(err, errDelete)
+		return managed.ExternalDelete{}, errors.Wrap(err, errDelete)
 	}
+	return managed.ExternalDelete{}, nil
+}
+
+// Disconnect from the provider and close the ExternalClient.
+func (c *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 

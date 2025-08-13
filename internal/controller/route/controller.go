@@ -206,21 +206,25 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Delete deletes a route
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Route)
 	if !ok {
-		return errors.New(errNotRoute)
+		return managed.ExternalDelete{}, errors.New(errNotRoute)
 	}
 
 	// Prevent delete if there are bindings.
 	if len(cr.Status.AtProvider.Destinations) > 0 {
-		return errors.New(errActiveBinding)
+		return managed.ExternalDelete{}, errors.New(errActiveBinding)
 	}
 
 	cr.SetConditions(xpv1.Deleting())
 
-	return c.RouteService.Delete(ctx, meta.GetExternalName(cr))
+	return managed.ExternalDelete{}, c.RouteService.Delete(ctx, meta.GetExternalName(cr))
+}
 
+// Disconnect from the provider and close the ExternalClient.
+func (c *external) Disconnect(ctx context.Context) error {
+	return nil
 }
 
 // ResolveReferences of this Route.

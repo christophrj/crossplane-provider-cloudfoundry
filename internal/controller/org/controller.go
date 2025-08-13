@@ -191,12 +191,17 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Delete managed resource Org
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Organization)
 	if !ok {
-		return errors.New(errNotOrgKind)
+		return managed.ExternalDelete{}, errors.New(errNotOrgKind)
 	}
 	// Do nothing, as Org is observe-only
 	cr.SetConditions(xpv1.Deleting())
+	return managed.ExternalDelete{}, nil
+}
+
+// Disconnect from the provider and close the ExternalClient.
+func (c *external) Disconnect(ctx context.Context) error {
 	return nil
 }

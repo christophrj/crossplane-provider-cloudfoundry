@@ -284,16 +284,21 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Delete attempts to delete the external resource.
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.ServiceInstance)
 	if !ok {
-		return errors.New(errWrongCRType)
+		return managed.ExternalDelete{}, errors.New(errWrongCRType)
 	}
 	cr.SetConditions(xpv1.Deleting())
 
 	if err := c.serviceinstance.Delete(ctx, cr); err != nil {
-		return errors.New(errDelete)
+		return managed.ExternalDelete{}, errors.New(errDelete)
 	}
+	return managed.ExternalDelete{}, nil
+}
+
+// Disconnect from the provider and close the ExternalClient.
+func (c *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 

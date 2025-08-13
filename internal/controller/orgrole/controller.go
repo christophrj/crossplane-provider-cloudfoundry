@@ -191,25 +191,30 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 // Delete managed resource OrgRole
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.OrgRole)
 	if !ok {
-		return errors.New(errWrongKind)
+		return managed.ExternalDelete{}, errors.New(errWrongKind)
 	}
 	// TODO
 
 	cr.SetConditions(xpv1.Deleting())
 	if cr.Status.AtProvider.ID == nil {
-		return nil
+		return managed.ExternalDelete{}, nil
 	}
 
 	// Delete is async and we need to implement wait for deletion
 	jobGUID, err := c.role.Delete(ctx, *cr.Status.AtProvider.ID)
 	if err != nil {
-		return errors.Wrap(err, errDelete)
+		return managed.ExternalDelete{}, errors.Wrap(err, errDelete)
 	}
 
-	return job.PollJobComplete(ctx, c.job, jobGUID)
+	return managed.ExternalDelete{}, job.PollJobComplete(ctx, c.job, jobGUID)
+}
+
+// Disconnect from the provider and close the ExternalClient.
+func (c *external) Disconnect(ctx context.Context) error {
+	return nil
 }
 
 type initializer struct {

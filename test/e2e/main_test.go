@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 		ProviderName:       "provider-cloudfoundry",
 		Images:             img,
 		ProviderCredential: &clusterCredentials,
-		CrossplaneSetup:    setup.CrossplaneSetup{Version: "1.16.0"},
+		CrossplaneSetup:    setup.CrossplaneSetup{Version: "1.20.0"},
 		ControllerConfig: &vendored.ControllerConfig{
 			Spec: vendored.ControllerConfigSpec{
 				Image: img.ControllerImage,

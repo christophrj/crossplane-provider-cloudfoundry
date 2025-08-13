@@ -197,23 +197,28 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}, nil
 }
 
-func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
+func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.SpaceMembers)
 	if !ok {
-		return errors.New(errWrongKind)
+		return managed.ExternalDelete{}, errors.New(errWrongKind)
 	}
 
 	cr.SetConditions(xpv1.Deleting())
 
 	// nothing to delete
 	if len(cr.Status.AtProvider.AssignedRoles) == 0 {
-		return nil
+		return managed.ExternalDelete{}, nil
 	}
 
 	err := c.client.DeleteSpaceMembers(ctx, cr)
 	if err != nil {
-		return errors.Wrap(err, errDelete)
+		return managed.ExternalDelete{}, errors.Wrap(err, errDelete)
 	}
 
+	return managed.ExternalDelete{}, nil
+}
+
+// Disconnect from the provider and close the ExternalClient.
+func (c *external) Disconnect(ctx context.Context) error {
 	return nil
 }
